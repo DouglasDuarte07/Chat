@@ -1,0 +1,12 @@
+{
+  "name": "sistemachat",
+  "version": "1.0.0",
+  "description": "Sistema de Chat para fins didáticos",
+  "scripts": {
+    "test": "sh script.sh",
+    "start": "node src/index.js",
+    "dev": "npx nodemon src/index.js"
+  },
+  "author": "",
+  "license": "ISC"
+}
