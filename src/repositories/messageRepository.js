@@ -16,9 +16,9 @@ class MessageRepository {
     await writeFile(this.file, JSON.stringify(currentFile));
   }
 
-  async remove(itemId) {
-
+  async read(itemId) {
+    return await this._currentFileContent();
   }
 }
 
-module.exports = messageRepository
+module.exports = MessageRepository

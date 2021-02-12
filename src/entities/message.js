@@ -20,7 +20,3 @@ class Message {
 }
 
 module.exports = Message
-
-const hero = new Message({  user: "@douglas", message:"eae galera"})
-console.log('valid', hero.isValid())
-console.log('valid', hero)

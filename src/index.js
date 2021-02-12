@@ -1,75 +1,53 @@
-const http = require('http')
-const PORT = 3000
-const DEFAULT_HEADER = { 'Content-Type': 'application/json' }
+//Default config 
+const DEFAULT_HEADER = { 'Content-Type': 'application/json' };
+const PORT = 3000;
+const express = require('express');
+const app = express();
 
-const HeroFactory = require('./factories/heroFactory')
-const heroService = HeroFactory.generateInstance()
-const Hero = require('./entities/hero')
+const bodyParser = require('body-parser');
+app.use(bodyParser.json())
 
-const routes = {
-    '/heroes:get': async (request, response) => {
-        const { id } = request.queryString
-        const heroes = await heroService.find(id)
-        response.write(JSON.stringify({ results: heroes }))
 
-        return response.end()
-    },
-    '/heroes:post': async (request, response) => {
-        // async iterator
-        for await (const data of request) {
-            try {
+const MessageFactory = require('./factories/messageFactory')
+const messageService = MessageFactory.generateInstance()
+const Message = require('./entities/message')
 
-                // await Promise.reject('/heroes:get')
-                const item = JSON.parse(data)
-                const hero = new Hero(item)
-                const { error, valid } = hero.isValid()
-                if (!valid) {
-                    response.writeHead(400, DEFAULT_HEADER)
-                    response.write(JSON.stringify({ error: error.join(',') }))
-                    return response.end()
-                }
+const	SUCCESS_REQUEST = 200;
+const	BAD_REQUEST = 400;
+const	UNAUTHORIZED = 401;
 
-                const id = await heroService.create(hero)
-                response.writeHead(201, DEFAULT_HEADER)
-                response.write(JSON.stringify({ success: 'User Created with success!!', id }))
+app.post('/send', async (req, res) => {
+  res.setHeader('Content-Type', 'application/json')
+  let {body} = req;
+  try{
+		let data = new Message(body);
 
-                // só jogamos o return aqui pois sabemos que é um objeto body por requisicao
-                // se fosse um arquivo, que sobe sob demanda 
-                // ele poderia entrar mais vezes em um mesmo evento, aí removeriamos o return
-                return response.end()
-            } catch (error) {
-                return handleError(response)(error)
-            }
-        }
-    },
-    default: (request, response) => {
-        response.write('Hello!')
-        response.end()
-    }
-}
+		if(data.isValid()){
+			messageService.new(data);
+		  res.status(SUCCESS_REQUEST).send(data);
+		}else
+		  res.status(BAD_REQUEST).send(data);
 
-const handleError = response => {
-    return error => {
-        console.error('Deu Ruim!***', error)
-        response.writeHead(500, DEFAULT_HEADER)
-        response.write(JSON.stringify({ error: 'Internal Server Error!!' }))
+	}catch(e){
+		res.status(BAD_REQUEST).send({error: e})
+	}
+})
 
-        return response.end()
-    }
-}
+app.get('/read', async (req, res) => {
+  res.setHeader('Content-Type', 'application/json')
+  let {body} = req;
+  try{
+  	let database = await messageService.read();
+  	res.status(SUCCESS_REQUEST).send(database)
+	}catch(e){
+		res.status(BAD_REQUEST).send({error: e})
+	}
+})
 
-const handler = (request, response) => {
-    const { url, method } = request
-    const [first, route, id] = url.split('/')
-    request.queryString = { id: isNaN(id) ? id : Number(id) }
+app.get('/get', async (req, res) => {
+  
+})
 
-    const key = `/${route}:${method.toLowerCase()}`
-
-    response.writeHead(200, DEFAULT_HEADER)
-
-    const chosen = routes[key] || routes.default
-    return chosen(request, response).catch(handleError(response))
-}
-
-http.createServer(handler)
-    .listen(PORT, () => console.log('server running at', PORT))
+app.listen(PORT, () => {
+  console.log(`application active in http://localhost:${PORT}`)
+})
